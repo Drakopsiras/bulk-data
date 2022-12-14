@@ -1,0 +1,40 @@
+USE [base_datos]
+GO
+/****** Object:  StoredProcedure [dbo].[BULK_DATA]    Script Date: 20-04-2022 10:52:10 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:        <H.S>
+-- Create date: <Create Date,,>
+-- Description:    <sp para cargar datos desde archivos txt,csv, etc.. >
+-- =============================================
+ALTER PROCEDURE [dbo].[BULK_DATA] (
+    @location_file varchar(1000), -- Ubicacion del archivo
+    @name_file varchar(1000), -- Nombre Archivo
+    @schemma_table_insert varchar(1000), -- FORMATO <NOMBRE_BASE_DATOS>.dbo.<NOMBRE_TABLA>
+    @restriccion_documents varchar(1000) -- RESTRICCION DE COMO SE LEERA LOS DATOS EJ: FIRSTROW = 2, FIELDTERMINATOR=''|'', ROWTERMINATOR=''0x0a''
+)
+        
+AS
+BEGIN
+    DECLARE @comando nvarchar(1000),
+            @fecha nvarchar(250),
+            @ruta nvarchar(1000);
+
+ 
+
+   SELECT @location_file
+   SELECT @name_file
+   SELECT @schemma_table_insert
+   SELECT @restriccion_documents
+
+ 
+
+    SET @ruta = @location_file + @name_file
+    SET @comando = 'BULK INSERT '+ @schemma_table_insert +' FROM ''' + @ruta + ''' WITH ('+@restriccion_documents +')'
+    EXEC sp_executesql @comando
+    
+END
+
