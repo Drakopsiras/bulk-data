@@ -1,0 +1,43 @@
+USE [BASE_DATOS]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_EXTRAE_ARCHIVOS]    Script Date: 19-04-2022 11:04:45 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:        <>
+-- Create date: <Create Date,,>
+-- Description:    <Description,,>
+-- =============================================
+ALTER PROCEDURE [dbo].[SP_EXTRAE_ARCHIVOS] (
+    @SourcePath varchar (1000),
+    @SourceFile varchar (1000),
+	@nombre_desc varchar (1000),
+    @SourceAlternative varchar (1000) = ''	
+) AS 
+
+BEGIN
+
+   DECLARE 
+     @workdir varchar (1000), 
+     @comandos varchar(1000),
+     @salida int    ,
+     @dondeGuardar varchar (1000)	 
+    -- Extrae Archivos    
+
+    SET @dondeGuardar = @SourcePath
+
+    IF @SourceAlternative != ''
+    BEGIN 
+        SET @dondeGuardar = @SourceAlternative
+    END	
+
+
+
+	SET @comandos = CONCAT('"C:\Program Files\7-zip\7z" e ', @SourcePath,@SourceFile,' -o',@dondeGuardar,' ',@nombre_desc,' -r')
+    exec @salida = master..xp_cmdshell @comandos        
+
+    return @salida
+END
+
