@@ -1,0 +1,42 @@
+USE [BASE_DATOS]
+GO
+
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		<H,S>
+-- Create date: <Create Date,,>
+-- Description:	<Description,,>
+-- =============================================
+ALTER PROCEDURE [dbo].[SP_CARGA_LOG_ACCESOS]
+AS
+BEGIN
+	
+	DECLARE @NOMBRE VARCHAR(100) = 'AUD_LOGIN_CRM_'+format(getdate()-1,'yyyyMMdd')+'.TXT' 
+
+	EXEC DATOS.[dbo].SP_DESCARGA_ARCHIVOS
+	@FTPServer = 'XXXX',
+	@FTPUser = 'XXXX',
+	@FTPPWD = 'XXXX',
+	@FTPPath = '/REPOSITORIO/REPORTES/RUTA/',
+	@FTPFileName = @NOMBRE,
+	@SourcePath = 'H:\BASE\LOG\',
+	@SourceFile = @NOMBRE,
+	@extraible = 1,
+	@borra = 0,
+	@direccionAlternativa = ''
+
+	WAITFOR DELAY '00:00:30'
+
+
+
+	   
+	EXEC DATOS.dbo.BULK_DATA 
+	@location_file = 'H:\BASE\LOG\',	
+	@name_file = @NOMBRE,
+	@schemma_table_insert = '[BASE_DATOS].[dbo].[LOG]',
+	@restriccion_documents = 'FIRSTROW = 2, FIELDTERMINATOR=''|'', ROWTERMINATOR=''0x0a'' '
+
+END
