@@ -1,0 +1,115 @@
+USE [base_datos]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_DESCARGA_ARCHIVOS]    Script Date: 19-04-2022 11:04:07 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:        <H.S>
+-- Create date: <Create Date,,>
+-- Description:    <Description,,>
+-- =============================================
+ALTER PROCEDURE [dbo].[SP_DESCARGA_ARCHIVOS] (
+     @FTPServer varchar (256),        -- Servidor
+     @FTPUser varchar (256),        -- Usuario Servidor
+     @FTPPWD varchar (256),            -- Contraseña Servidor
+     @FTPPath varchar (256),        -- Url direccion de carpetas FTP
+     @FTPFileName varchar (256),    -- Nombre Archivo a Descargar FTP  
+     @SourcePath varchar (256),        -- Direccion donde se descargara
+     @SourceFile varchar (256) ='', -- Nombre Archivo a descargar
+	 @nombre_desc varchar(256) = '',
+     @extraible int = 0,            -- Necesita descromprimir un archivo 0/1 | Si/No
+     @borra int = 0,                -- Necesita descromprimir un archivo 0/1 | Si/No
+     @direccionAlternativa varchar(1000) = '' -- Direccion donde se extraera el archivo
+) AS 
+
+
+BEGIN
+
+    DECLARE 
+     @workdir varchar (128), 
+     @cmd varchar (1000), 
+     @cmd2 varchar (1000),    
+     @workfilename varchar (128),
+     @comandos varchar(128)
+
+
+    SET @workdir = @SourcePath
+    SET @workfilename = 'ftpcmd.txt'
+    
+    select @workfilename = 'ftpcmd.txt'
+    
+    -- deal with special characters for echo commands
+    select @FTPServer = replace(replace(replace(@FTPServer, '|', '^|'),'<','^<'),'>','^>')
+    select @FTPUser = replace(replace(replace(@FTPUser, '|', '^|'),'<','^<'),'>','^>')
+    select @FTPPWD = replace(replace(replace(@FTPPWD, '|', '^|'),'<','^<'),'>','^>')
+    select @FTPPath = replace(replace(replace(@FTPPath, '|', '^|'),'<','^<'),'>','^>')
+        
+    -- Eliminamos Archivos de la carpeta para que no existan problemasal descargar archivos
+    
+    if @borra = 1
+        Begin        
+            select @comandos = SUBSTRING(@SourcePath,1,1) + ':'
+            exec master..xp_cmdshell @comandos
+
+
+            select @comandos = 'DEL /F /Q ' + @SourcePath + '*'        
+            exec master..xp_cmdshell @comandos
+        END 
+    
+    -- Volvemos al disco C
+
+
+    select @comandos = 'C:'
+    exec master..xp_cmdshell @comandos
+
+
+    -- Nos conectamos a FTP a descargar archivos
+
+
+    select    @cmd = 'echo ' + 'open ' + @FTPServer + ' > ' + @workdir + @workfilename
+    exec master..xp_cmdshell @cmd
+
+
+    select    @cmd = 'echo ' + @FTPUser + '>> ' + @workdir + @workfilename
+    exec master..xp_cmdshell @cmd
+
+
+    select    @cmd = 'echo ' + @FTPPWD + '>> ' + @workdir + @workfilename
+    exec master..xp_cmdshell @cmd
+
+
+    select    @cmd = 'echo ' + 'get ' + @FTPPath + @FTPFileName + ' ' + @SourcePath + @SourceFile + ' >> ' + @workdir + @workfilename
+    exec master..xp_cmdshell @cmd
+
+
+    select    @cmd = 'echo ' + 'quit' + ' >> ' + @workdir + @workfilename
+    exec master..xp_cmdshell @cmd
+    
+    select @cmd = 'ftp -s:' + @workdir + @workfilename    
+
+
+    -- Descomprimimos y Cerramos Winrar
+    
+    create table #a (id int identity(1,1), s varchar(1000))
+    insert #a
+    exec master..xp_cmdshell @cmd
+    
+    select id, ouputtmp = s from #a    
+
+
+    if @extraible = 1
+        BEGIN             
+            EXEC [SEGURIDAD].dbo.SP_EXTRAE_ARCHIVOS
+            @SourcePath = @SourcePath,
+            @SourceFile = @SourceFile,
+			@nombre_desc = @nombre_desc,
+            @SourceAlternative = @direccionAlternativa;
+
+
+        END
+            
+    select @comandos = 'exit'
+    exec master..xp_cmdshell @comandos 
+END
